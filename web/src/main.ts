@@ -81,6 +81,11 @@ function modeControls(): string {
   `).join('');
 }
 
+function workspaceClassName(): string {
+  if (state.colours.length === 0) return 'workspace-card';
+  return `workspace-card has-results ${state.image ? 'has-image' : 'shared-results'}`;
+}
+
 function paletteMarkup(): string {
   if (state.busy && state.colours.length === 0) {
     return `<div class="result-placeholder"><span class="spinner" aria-hidden="true"></span><p>Finding a useful palette…</p></div>`;
@@ -163,8 +168,8 @@ function studioMarkup(): string {
         <div class="section-heading"><div><p class="eyebrow">Refine</p><h2 id="controls-heading">Shape the result</h2></div></div>
         <div class="field count-field">
           <div><label for="colour-count">Number of colours</label><output for="colour-count">${state.count}</output></div>
-          <input id="colour-count" type="range" min="3" max="12" value="${state.count}" />
-          <div class="range-labels" aria-hidden="true"><span>3</span><span>12</span></div>
+          <input id="colour-count" type="range" min="2" max="12" value="${state.count}" />
+          <div class="range-labels" aria-hidden="true"><span>2</span><span>12</span></div>
         </div>
         <fieldset class="field mode-field"><legend>Extraction style</legend>${modeControls()}</fieldset>
         <details class="advanced">
@@ -198,7 +203,7 @@ function render(): void {
         <div><h1 id="page-title">Find the colours worth keeping.</h1></div>
         <p class="lede">Build a colour palette from any image, then copy it straight into your sketch. Everything stays in your browser.</p>
       </section>
-      <section class="workspace-card" aria-label="Palette extraction workspace">
+      <section class="${workspaceClassName()}" aria-label="Palette extraction workspace">
         ${state.error ? `<div class="message error" role="alert">${escapeHtml(state.error)}</div>` : ''}
         ${state.sharedOnly && state.notice ? `<div class="message" role="status">${escapeHtml(state.notice)}</div>` : ''}
         ${studioMarkup()}
@@ -212,8 +217,8 @@ function render(): void {
         <button class="dialog-close" id="close-info" type="button" aria-label="Close information">×</button>
       </div>
       <section>
-        <h3>Why 3–12 colours?</h3>
-        <p>This is a design choice, not a technical limit. Three creates a recognisable palette, while twelve keeps the swatches and code useful instead of filling them with tiny shade variations. The engine itself supports up to sixteen colours.</p>
+        <h3>Why 2–12 colours?</h3>
+        <p>Two supports focused duotone work, while twelve keeps the swatches and code useful instead of filling them with tiny shade variations. This is a design choice rather than a technical limit; the engine itself supports up to sixteen colours.</p>
       </section>
       <section>
         <h3>Before extraction</h3>
