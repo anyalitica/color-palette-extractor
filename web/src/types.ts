@@ -1,5 +1,21 @@
 export type ExtractionMode = 'natural' | 'graphic' | 'balanced';
 
+export interface RGB {
+  r: number;
+  g: number;
+  b: number;
+}
+
+export interface WeightedColour extends RGB {
+  weight: number;
+}
+
+export interface ExtractionOptions {
+  mode: ExtractionMode;
+  count: number;
+  minDistance: number;
+}
+
 export interface ModeDefinition {
   id: ExtractionMode;
   label: string;

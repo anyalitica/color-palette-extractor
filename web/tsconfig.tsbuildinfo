@@ -1,1 +1,1 @@
-{"root":["./src/main.ts","./src/types.ts","./tests/foundation.test.ts","./vite.config.ts"],"version":"5.9.3"}
+{"root":["./src/main.ts","./src/types.ts","./src/colour/conversion.ts","./src/extraction/balanced.ts","./src/extraction/graphic.ts","./src/extraction/index.ts","./src/extraction/natural.ts","./src/extraction/shared.ts","./src/image/pixels.ts","./tests/extraction.test.ts","./tests/foundation.test.ts","./vite.config.ts"],"version":"5.9.3"}
