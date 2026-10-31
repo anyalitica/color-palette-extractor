@@ -163,4 +163,6 @@ tkinter_app/
 color_extractor_env/
 .DS_Store
 CLAUDE.md
-docs/
+docs/*
+!docs/static-v2-plan.md
+!docs/web-app-blog-post-draft.md

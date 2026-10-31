@@ -1,90 +1,125 @@
 # Colour Palette Extractor
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://color-extractor-app.streamlit.app/)
+A browser-based tool for turning an image into a useful colour palette and ready-to-copy creative code.
 
-This Streamlit app helps you extract colour palettes from any image using machine learning algorithms. Designed for developers and creatives, it offers multiple extraction methods and export formats.
+**[Try the browser app](https://anyalitica.github.io/color-palette-extractor/)**
 
-![App Screenshot](https://github.com/anyalitica/color-extractor-app/blob/main/assets/app_screenshot.png)
+The original Streamlit version remains available from the `streamlit-v1` tag and in the `streamlit/` directory.
 
-## Key features
+## Why static v2
 
-- **Extraction & analysis**
-    - 6 extraction algorithms with smart recommendations
-    - Warm/Cool tone detection
-    - Algorithm suggestions based on your image
-- **Customization & filtering**
-    - Adjustable palette size (2-15 colours)
-    - Similarity filtering with clear explanations
-    - Algorithm-specific tuning options
-    - Live HEX/RGB format toggle (no re-extraction needed)
-- **Export & integration**
-    - CSS variables (ready for web development)
-    - JSON (complete metadata)
-    - TXT & XML formats
-    - Shareable palette links (image remains private)
-- **User experience**
-    - Mobile-responsive design
-    - Undo support for cleared palettes
-    - Keyboard shortcut hints for copying
+The original app proved the concept, but its seven algorithms, server-side session state, and large single-file interface made a simple creative workflow harder to understand and maintain.
 
-## Live demo & usage
+Static v2 is designed around four steps:
 
-**[Try the live app here](https://color-extractor-app.streamlit.app/)**
+1. Drop, choose, or paste an image.
+2. Choose how the palette should feel.
+3. Adjust the number and distinctness of colours.
+4. Copy the palette directly into a creative-coding project.
 
-1.  **Upload an image**: Upload your own image or use the provided sample
-2.  **Configure the algorithm**: Adjust the number of colours, choose an extraction algorithm, and set the similarity filter
-3.  **Extract**: Click the "Extract colour palette" button.
-4.  **Share or export**: Copy the colour values, grab the shareable palette link, or download the palette as JSON, CSS, TXT, or XML.
+Image processing happens locally in the browser. Image bytes are never uploaded or included in shared palette links.
 
-## Algorithm guide
+## Features
 
-Choose the best algorithm for your image type for optimal results.
+- Three result-oriented extraction modes
+- Deterministic browser-side image processing
+- Perceptual colour filtering in Lab space
+- Transparent-pixel handling and large-image downsampling
+- Responsive, keyboard-accessible interface
+- Click-to-copy colour swatches
+- Live HEX/RGB swatch toggle without re-extraction
+- HEX- or RGB-consistent snippets with readable colour-name annotations
+- Built-in guide explaining preprocessing and each extraction method
+- JavaScript, CSS, JSON, p5.js, Processing, and GLSL output
+- Downloadable code snippets
+- Shareable URL fragments containing palette data, not images
+- Sample artwork for quick experimentation
 
-| Algorithm | Best for | Speed | Result cohesion | Use case |
-|:---|:---|:---:|:---:|:---|
-| **K-means (Improved)** | Photographs | Medium | High | Best all-rounder for complex images |
-| **Colour Histogram** | Graphics/Logos | Fast | High | Images with large, distinct colour regions |
-| **Median Cut** | All image types | Medium | High | Classic algorithm, gives well-balanced results |
-| **Hierarchical** | Art/Complex scenes | Slow | Very high | Excellent for analyzing colour harmony |
-| **Dominant Sampling** | Quick previews | Very fast | Medium | Ideal for a fast first look |
-| **Quantization** | Simple graphics | Fast | Medium | Memory-efficient and great for simple images |
+## Extraction modes
 
-## Future improvements
+| Mode | Method | Best for |
+|:---|:---|:---|
+| **Natural** | Deterministic K-means | Photographs and gradual colour variation |
+| **Graphic** | Weighted quantised histogram | Logos, illustrations, and flat artwork |
+| **Balanced** | Population-aware median cut | A broader range from across an image |
 
-Potential features on the roadmap include:
+Every mode produces weighted candidates. A shared post-processing step filters perceptually similar colours, backfills from unused candidates when possible, and sorts the result consistently.
 
--   **Accessibility checker**: A tool to calculate the contrast ratio between palette colours to ensure they meet standards for web accessibility
--   **Transparent background support**: A feature to correctly handle transparent pixels in PNG images, either by ignoring them or treating them as a background colour
--   **Advanced colour naming**: Integration with a colour-name library to provide more accurate and standardised names than the current rule-based system
+## Project structure
+
+```text
+.
+├── web/                         # Static v2 Vite and TypeScript app
+│   ├── src/
+│   │   ├── colour/              # Colour conversion and Lab distance
+│   │   ├── extraction/          # Three algorithms and Web Worker
+│   │   ├── image/               # Browser decoding and pixel preparation
+│   │   ├── output/              # Code formatters and URL sharing
+│   │   ├── main.ts              # Application state and interface
+│   │   └── styles.css
+│   └── tests/
+├── streamlit/                   # Original v1 implementation
+├── docs/static-v2-plan.md       # Migration plan and acceptance gates
+├── docs/web-app-blog-post-draft.md
+└── .github/workflows/           # Tests, build, and Pages deployment
+```
 
 ## Local development
 
-To run the app on your local machine:
+Node.js 20 or newer is required.
 
 ```bash
-# Clone the repository
-git clone https://github.com/anyalitica/color-extractor-app.git
-cd color-extractor-app/streamlit
+git clone https://github.com/anyalitica/color-palette-extractor.git
+cd color-palette-extractor/web
+npm ci --legacy-peer-deps
+npm run dev
+```
 
-# Create and activate a virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+The development server prints its local URL.
 
-# Install dependencies from the requirements file
+## Verification
+
+Run the same checks used before each staged merge:
+
+```bash
+cd web
+npm run typecheck
+npm run test:run
+npm run build
+```
+
+Tests cover deterministic extraction, non-power-of-two palette sizes, similarity backfilling, transparent pixels, colour conversion, code output, and shared-state validation.
+
+## Deployment
+
+The GitHub Actions workflow builds `web/` and publishes `web/dist/` to GitHub Pages after changes reach `main`. Vite uses relative asset paths so the app works at the repository URL:
+
+`https://anyalitica.github.io/color-palette-extractor/`
+
+GitHub Pages must use **GitHub Actions** as its build source in the repository settings before the first deployment.
+
+## Original Streamlit app
+
+The original application can still be run locally:
+
+```bash
+cd streamlit
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-
-# Run the Streamlit app
 streamlit run app.py
 ```
 
-## Contributing
+The `streamlit-v1` Git tag preserves the exact pre-migration state.
 
-Contributions, issues, and feature requests are welcome! Please feel free to fork the repository, make changes, and open a pull request.
+## Migration plan
+
+The staged implementation plan, cutover sequence, and definition of done are documented in [docs/static-v2-plan.md](docs/static-v2-plan.md).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](LICENSE).
 
-## Contact
+## Author
 
-**Designed by**: Anya Prosvetova, [anyalitica.dev](https://anyalitica.dev)
+Designed and developed by [Anya Prosvetova](https://anyalitica.dev).
