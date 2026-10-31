@@ -3,6 +3,8 @@ import { colourDistance, rgbToHex } from '../src/colour/conversion';
 import { extractPalette } from '../src/extraction';
 import { pixelsFromRgba } from '../src/image/pixels';
 import type { RGB } from '../src/types';
+import { formatPalette } from '../src/output/formatters';
+import { decodeSharedPalette, encodeSharedPalette } from '../src/output/sharing';
 
 function repeated(colour: RGB, count: number): RGB[] {
   return Array.from({ length: count }, () => ({ ...colour }));
@@ -61,5 +63,30 @@ describe('RGBA preprocessing', () => {
       { r: 127, g: 127, b: 127 },
       { r: 20, g: 40, b: 60 },
     ]);
+  });
+});
+
+describe('creative coding output', () => {
+  const palette = [{ r: 255, g: 0, b: 16 }, { r: 0, g: 128, b: 255 }];
+
+  it('produces valid CSS values regardless of display format', () => {
+    expect(formatPalette(palette, 'css')).toContain('--colour-1: #ff0010;');
+  });
+
+  it('produces normalised GLSL vectors', () => {
+    expect(formatPalette(palette, 'glsl')).toContain('vec3(1.000, 0.000, 0.063)');
+  });
+
+  it('round-trips validated shared palette state', () => {
+    const shared = {
+      version: 1 as const,
+      colours: palette,
+      mode: 'natural' as const,
+      count: 2,
+      minDistance: 18,
+      format: 'p5js' as const,
+    };
+    expect(decodeSharedPalette(encodeSharedPalette(shared))).toEqual(shared);
+    expect(decodeSharedPalette('not-valid')).toBeNull();
   });
 });

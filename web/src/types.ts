@@ -16,6 +16,17 @@ export interface ExtractionOptions {
   minDistance: number;
 }
 
+export type OutputFormat = 'javascript' | 'css' | 'json' | 'p5js' | 'processing' | 'glsl';
+
+export interface SharedPalette {
+  version: 1;
+  colours: RGB[];
+  mode: ExtractionMode;
+  count: number;
+  minDistance: number;
+  format: OutputFormat;
+}
+
 export interface ModeDefinition {
   id: ExtractionMode;
   label: string;
