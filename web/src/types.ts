@@ -1,0 +1,13 @@
+export type ExtractionMode = 'natural' | 'graphic' | 'balanced';
+
+export interface ModeDefinition {
+  id: ExtractionMode;
+  label: string;
+  description: string;
+}
+
+export const MODE_DEFINITIONS: readonly ModeDefinition[] = [
+  { id: 'natural', label: 'Natural', description: 'Faithful colours for photographs' },
+  { id: 'graphic', label: 'Graphic', description: 'Dominant colours from flat artwork' },
+  { id: 'balanced', label: 'Balanced', description: 'A wider range from across the image' },
+];
