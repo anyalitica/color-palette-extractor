@@ -1,9 +1,10 @@
 import './styles.css';
 import { rgbToHex } from './colour/conversion';
 import type { ExtractionResponse } from './extraction/extraction.worker';
-import { createSampleImage, loadImage, type LoadedImage } from './image/load-image';
+import { createSampleImage, loadImage, loadImageFromUrl, type LoadedImage } from './image/load-image';
 import { formatColourValue, formatExtension, formatPalette, OUTPUT_FORMATS } from './output/formatters';
 import { decodeSharedPalette, encodeSharedPalette, paletteTokenFromHash } from './output/sharing';
+import { isThemePreference, resolveTheme, THEME_STORAGE_KEY, type ThemePreference } from './theme';
 import {
   MODE_DEFINITIONS,
   type DisplayFormat,
@@ -27,11 +28,37 @@ interface AppState {
   notice: string;
   requestId: number;
   sharedOnly: boolean;
+  theme: ThemePreference;
+  imageUrl: string;
 }
+
+type ImageSource = File | 'sample' | { url: string };
 
 const appElement = document.querySelector<HTMLDivElement>('#app');
 if (!appElement) throw new Error('Application root was not found.');
 const app: HTMLDivElement = appElement;
+const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+function savedTheme(): ThemePreference {
+  try {
+    const saved = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return isThemePreference(saved) ? saved : 'system';
+  } catch {
+    return 'system';
+  }
+}
+
+function applyTheme(theme: ThemePreference): void {
+  if (theme === 'system') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = theme;
+  const themeColour = document.querySelector<HTMLMetaElement>('#theme-colour');
+  if (themeColour) themeColour.content = resolveTheme(theme, systemTheme.matches) === 'dark' ? '#181614' : '#f4f1eb';
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // The selected theme still applies when browser storage is unavailable.
+  }
+}
 
 const sharedToken = paletteTokenFromHash(window.location.hash);
 const shared = sharedToken ? decodeSharedPalette(sharedToken) : null;
@@ -49,7 +76,14 @@ const state: AppState = {
   notice: shared ? 'Shared palette restored — the original image was not included.' : '',
   requestId: 0,
   sharedOnly: Boolean(shared),
+  theme: savedTheme(),
+  imageUrl: '',
 };
+
+applyTheme(state.theme);
+systemTheme.addEventListener('change', () => {
+  if (state.theme === 'system') applyTheme('system');
+});
 
 const worker = new Worker(new URL('./extraction/extraction.worker.ts', import.meta.url), { type: 'module' });
 worker.addEventListener('message', ({ data }: MessageEvent<ExtractionResponse>) => {
@@ -156,6 +190,15 @@ function uploadMarkup(compact = false): string {
         <label class="button" for="image-input">Choose image</label>
         <button class="text-button" id="sample-image" type="button">Try sample artwork</button>
       </div>
+      <details class="url-upload"${state.error && state.imageUrl ? ' open' : ''}>
+        <summary>Use an image link</summary>
+        <form id="image-url-form">
+          <label class="visually-hidden" for="image-url">Direct image link</label>
+          <input id="image-url" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com/image.jpg" value="${escapeHtml(state.imageUrl)}" required />
+          <button class="button button-small" type="submit">Load</button>
+        </form>
+        <small>Works when the image host allows browser access.</small>
+      </details>
       <small>PNG, JPEG, WebP and other browser-supported images</small>
     </div>
   `;
@@ -205,14 +248,19 @@ function render(): void {
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Colour Palette Extractor</span>
       </a>
       <div class="header-actions">
+        <label class="theme-control" for="theme-select"><span>Theme</span><select id="theme-select" aria-label="Colour theme">
+          <option value="system"${state.theme === 'system' ? ' selected' : ''}>System</option>
+          <option value="light"${state.theme === 'light' ? ' selected' : ''}>Light</option>
+          <option value="dark"${state.theme === 'dark' ? ' selected' : ''}>Dark</option>
+        </select></label>
         <button class="info-button" id="open-info" type="button"><span aria-hidden="true">i</span><strong>How it works</strong></button>
         <a class="source-link" href="https://github.com/anyalitica/color-palette-extractor">View source <span aria-hidden="true">↗</span></a>
       </div>
     </header>
     <main id="workspace" class="page-shell">
       <section class="intro" aria-labelledby="page-title">
-        <h1 id="page-title">Find the colours worth keeping.</h1>
-        <p class="lede">Build a colour palette from any image, then copy it straight into your sketch. Everything stays in your browser.</p>
+        <h1 id="page-title">Find the colours worth keeping</h1>
+        <p class="lede">Build a colour palette from any image, and copy it straight into your sketch. Your image is processed locally in your browser; the app never stores it.</p>
       </section>
       <section class="workspace-card two-panel-workspace" aria-label="Palette extraction workspace">
         ${state.error ? `<div class="message error" role="alert">${escapeHtml(state.error)}</div>` : ''}
@@ -259,6 +307,10 @@ function render(): void {
         <h3>After extraction</h3>
         <p>All candidates are compared in perceptual Lab space. Similar colours are skipped, then unused candidates are backfilled by distance when needed. This encourages clear separation without unnecessarily returning fewer colours than requested.</p>
       </section>
+      <section>
+        <h3>Colour names</h3>
+        <p>Snippet annotations use systematic descriptions based on hue, saturation, and perceptual Lab lightness. Broad colour families such as orange, amber, green, and red are combined with useful modifiers such as muted, dark, or very light. This avoids surprising decorative names caused by matching against a sparse lookup table.</p>
+      </section>
     </dialog>
     <div class="toast" role="status" aria-live="polite">${escapeHtml(state.notice)}</div>
   `;
@@ -280,14 +332,20 @@ function requestExtraction(): void {
   render();
 }
 
-async function useImage(source: File | 'sample'): Promise<void> {
+async function useImage(source: ImageSource): Promise<void> {
+  state.imageUrl = typeof source === 'object' && !(source instanceof File) ? source.url : '';
   state.busy = true;
   state.error = '';
   state.notice = '';
   state.colours = [];
   render();
   try {
-    state.image = source === 'sample' ? await createSampleImage() : await loadImage(source);
+    state.image = source === 'sample'
+      ? await createSampleImage()
+      : source instanceof File
+        ? await loadImage(source)
+        : await loadImageFromUrl(source.url);
+    state.imageUrl = '';
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
     requestExtraction();
   } catch (error) {
@@ -325,6 +383,18 @@ function bindEvents(): void {
     if (file) void useImage(file);
   });
   document.querySelector('#sample-image')?.addEventListener('click', () => void useImage('sample'));
+  document.querySelector<HTMLFormElement>('#image-url-form')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const url = document.querySelector<HTMLInputElement>('#image-url')?.value.trim();
+    if (url) void useImage({ url });
+  });
+
+  document.querySelector<HTMLSelectElement>('#theme-select')?.addEventListener('change', (event) => {
+    const theme = (event.target as HTMLSelectElement).value;
+    if (!isThemePreference(theme)) return;
+    state.theme = theme;
+    applyTheme(theme);
+  });
 
   const dropZone = document.querySelector<HTMLElement>('#drop-zone');
   dropZone?.addEventListener('dragover', (event) => { event.preventDefault(); dropZone.classList.add('is-dragging'); });

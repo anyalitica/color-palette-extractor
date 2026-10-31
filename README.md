@@ -12,12 +12,12 @@ The original app proved the concept, but its seven algorithms, server-side sessi
 
 Static v2 is designed around four steps:
 
-1. Drop, choose, or paste an image.
+1. Drop, choose, paste, or link to an image.
 2. Choose how the palette should feel.
 3. Adjust the number and distinctness of colours.
 4. Copy the palette directly into a creative-coding project.
 
-Image processing happens locally in the browser. Image bytes are never uploaded or included in shared palette links.
+Image processing happens locally in the browser. Local image bytes are never uploaded or included in shared palette links; linked images are fetched directly by the browser when their host permits it.
 
 ## Features
 
@@ -26,9 +26,11 @@ Image processing happens locally in the browser. Image bytes are never uploaded 
 - Perceptual colour filtering in Lab space
 - Transparent-pixel handling and large-image downsampling
 - Responsive, keyboard-accessible interface
+- Automatic system theme with persistent Light and Dark overrides
+- Local file, clipboard, drag-and-drop, and direct image-link input
 - Click-to-copy colour swatches
 - Live HEX/RGB swatch toggle without re-extraction
-- HEX- or RGB-consistent snippets with readable colour-name annotations
+- HEX- or RGB-consistent snippets with systematic, perceptual colour-name annotations
 - Built-in guide explaining preprocessing and each extraction method
 - JavaScript, CSS, JSON, p5.js, Processing, and GLSL output
 - Downloadable code snippets

@@ -1,51 +1,82 @@
-import { colourDistance } from './conversion';
+import { normaliseRgb, rgbToLab } from './conversion';
 import type { RGB } from '../types';
 
-interface NamedColour extends RGB {
-  name: string;
+interface Hsl {
+  hue: number;
+  saturation: number;
 }
 
-const NAMED_COLOURS: readonly NamedColour[] = [
-  { name: 'Black', r: 0, g: 0, b: 0 },
-  { name: 'Charcoal', r: 54, g: 69, b: 79 },
-  { name: 'Slate', r: 112, g: 128, b: 144 },
-  { name: 'Grey', r: 128, g: 128, b: 128 },
-  { name: 'Silver', r: 192, g: 192, b: 192 },
-  { name: 'White', r: 255, g: 255, b: 255 },
-  { name: 'Cream', r: 255, g: 253, b: 208 },
-  { name: 'Beige', r: 222, g: 205, b: 164 },
-  { name: 'Sand', r: 194, g: 178, b: 128 },
-  { name: 'Brown', r: 139, g: 69, b: 19 },
-  { name: 'Chocolate', r: 123, g: 63, b: 0 },
-  { name: 'Maroon', r: 128, g: 0, b: 0 },
-  { name: 'Red', r: 220, g: 20, b: 60 },
-  { name: 'Coral', r: 255, g: 127, b: 80 },
-  { name: 'Salmon', r: 250, g: 128, b: 114 },
-  { name: 'Orange', r: 255, g: 128, b: 0 },
-  { name: 'Amber', r: 255, g: 191, b: 0 },
-  { name: 'Gold', r: 212, g: 175, b: 55 },
-  { name: 'Yellow', r: 255, g: 235, b: 59 },
-  { name: 'Lime', r: 160, g: 220, b: 60 },
-  { name: 'Olive', r: 128, g: 128, b: 0 },
-  { name: 'Green', r: 34, g: 139, b: 34 },
-  { name: 'Forest', r: 22, g: 92, b: 61 },
-  { name: 'Mint', r: 152, g: 255, b: 152 },
-  { name: 'Teal', r: 0, g: 128, b: 128 },
-  { name: 'Cyan', r: 0, g: 200, b: 210 },
-  { name: 'Sky blue', r: 135, g: 206, b: 235 },
-  { name: 'Blue', r: 30, g: 100, b: 220 },
-  { name: 'Navy', r: 0, g: 0, b: 128 },
-  { name: 'Indigo', r: 75, g: 0, b: 130 },
-  { name: 'Purple', r: 128, g: 0, b: 128 },
-  { name: 'Violet', r: 138, g: 43, b: 226 },
-  { name: 'Lavender', r: 190, g: 170, b: 230 },
-  { name: 'Magenta', r: 220, g: 30, b: 180 },
-  { name: 'Pink', r: 255, g: 160, b: 190 },
-  { name: 'Rose', r: 194, g: 30, b: 86 },
+const HUE_NAMES: ReadonlyArray<{ end: number; name: string }> = [
+  { end: 9, name: 'Red' },
+  { end: 20, name: 'Red orange' },
+  { end: 36, name: 'Orange' },
+  { end: 49, name: 'Amber' },
+  { end: 65, name: 'Yellow' },
+  { end: 88, name: 'Yellow green' },
+  { end: 155, name: 'Green' },
+  { end: 180, name: 'Turquoise' },
+  { end: 205, name: 'Cyan' },
+  { end: 255, name: 'Blue' },
+  { end: 285, name: 'Violet' },
+  { end: 325, name: 'Purple' },
+  { end: 345, name: 'Magenta' },
+  { end: 360, name: 'Red' },
 ];
 
+function rgbToHsl(colour: RGB): Hsl {
+  const { r, g, b } = normaliseRgb(colour);
+  const red = r / 255;
+  const green = g / 255;
+  const blue = b / 255;
+  const maximum = Math.max(red, green, blue);
+  const minimum = Math.min(red, green, blue);
+  const delta = maximum - minimum;
+  const lightness = (maximum + minimum) / 2;
+
+  if (delta === 0) return { hue: 0, saturation: 0 };
+
+  let hue: number;
+  if (maximum === red) hue = 60 * (((green - blue) / delta) % 6);
+  else if (maximum === green) hue = 60 * ((blue - red) / delta + 2);
+  else hue = 60 * ((red - green) / delta + 4);
+
+  return {
+    hue: hue < 0 ? hue + 360 : hue,
+    saturation: delta / (1 - Math.abs(2 * lightness - 1)),
+  };
+}
+
+function neutralName(perceptualLightness: number): string {
+  if (perceptualLightness < 8) return 'Black';
+  if (perceptualLightness < 25) return 'Charcoal';
+  if (perceptualLightness < 45) return 'Dark grey';
+  if (perceptualLightness < 68) return 'Grey';
+  if (perceptualLightness < 86) return 'Light grey';
+  if (perceptualLightness < 97) return 'Off white';
+  return 'White';
+}
+
+function lightnessPrefix(perceptualLightness: number): string {
+  if (perceptualLightness < 8) return 'Near-black';
+  if (perceptualLightness < 24) return 'Very dark';
+  if (perceptualLightness < 43) return 'Dark';
+  if (perceptualLightness > 88) return 'Very light';
+  if (perceptualLightness > 72) return 'Light';
+  return '';
+}
+
+/**
+ * Produces stable, descriptive labels rather than choosing a potentially
+ * misleading decorative keyword from a sparse named-colour table.
+ */
 export function getColourName(colour: RGB): string {
-  return NAMED_COLOURS.reduce((closest, candidate) =>
-    colourDistance(colour, candidate) < colourDistance(colour, closest) ? candidate : closest,
-  ).name;
+  const { hue, saturation } = rgbToHsl(colour);
+  const perceptualLightness = rgbToLab(colour).l;
+  if (saturation < 0.12) return neutralName(perceptualLightness);
+
+  const baseName = HUE_NAMES.find(({ end }) => hue < end)?.name ?? 'Red';
+  const prefix = lightnessPrefix(perceptualLightness);
+  if (prefix) return `${prefix} ${baseName.toLowerCase()}`;
+  if (saturation < 0.35) return `Muted ${baseName.toLowerCase()}`;
+  return baseName;
 }
