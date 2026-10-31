@@ -114,12 +114,12 @@ function paletteMarkup(): string {
       </div>
       <div class="code-panel">
         <div class="code-toolbar">
-          <label for="output-format">Code format</label>
+          <label for="output-format">Code format · ${state.displayFormat.toUpperCase()}</label>
           <select id="output-format">${outputOptions()}</select>
           <button class="button button-small" id="copy-code" type="button">Copy snippet</button>
           <button class="icon-button" id="download-code" type="button" aria-label="Download palette code" title="Download palette code">↓</button>
         </div>
-        <pre tabindex="0"><code>${escapeHtml(formatPalette(state.colours, state.format))}</code></pre>
+        <pre tabindex="0"><code>${escapeHtml(formatPalette(state.colours, state.format, state.displayFormat))}</code></pre>
         <div class="share-row">
           <p>Share the colours and settings — never the source image.</p>
           <button class="text-button" id="share-palette" type="button">Copy share link</button>
@@ -188,12 +188,15 @@ function render(): void {
       <a class="brand" href="./" aria-label="Colour Palette Extractor home">
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Colour Palette Extractor</span>
       </a>
-      <a class="source-link" href="https://github.com/anyalitica/color-extractor-app">View source <span aria-hidden="true">↗</span></a>
+      <div class="header-actions">
+        <button class="info-button" id="open-info" type="button"><span aria-hidden="true">i</span><strong>How it works</strong></button>
+        <a class="source-link" href="https://github.com/anyalitica/color-extractor-app">View source <span aria-hidden="true">↗</span></a>
+      </div>
     </header>
     <main id="workspace" class="page-shell">
       <section class="intro" aria-labelledby="page-title">
-        <div><p class="eyebrow">Image to creative code</p><h1 id="page-title">Find the colours worth keeping.</h1></div>
-        <p class="lede">Build a thoughtful palette from any image, then copy it straight into your sketch. Everything stays in your browser.</p>
+        <div><h1 id="page-title">Find the colours worth keeping.</h1></div>
+        <p class="lede">Build a colour palette from any image, then copy it straight into your sketch. Everything stays in your browser.</p>
       </section>
       <section class="workspace-card" aria-label="Palette extraction workspace">
         ${state.error ? `<div class="message error" role="alert">${escapeHtml(state.error)}</div>` : ''}
@@ -202,7 +205,35 @@ function render(): void {
         ${paletteMarkup()}
       </section>
     </main>
-    <footer><p>Designed for creative coding.</p><p>Private by default · No upload · Open source</p></footer>
+    <footer><p>Designed for creative coding</p><p>Private by default · Open source</p></footer>
+    <dialog class="info-dialog" id="info-dialog" aria-labelledby="info-title">
+      <div class="dialog-heading">
+        <div><p class="eyebrow">Behind the palette</p><h2 id="info-title">How extraction works</h2></div>
+        <button class="dialog-close" id="close-info" type="button" aria-label="Close information">×</button>
+      </div>
+      <section>
+        <h3>Why 3–12 colours?</h3>
+        <p>This is a design choice, not a technical limit. Three creates a recognisable palette, while twelve keeps the swatches and code useful instead of filling them with tiny shade variations. The engine itself supports up to sixteen colours.</p>
+      </section>
+      <section>
+        <h3>Before extraction</h3>
+        <ol>
+          <li>The browser decodes and resizes the image to a maximum dimension of 800 pixels.</li>
+          <li>Up to 50,000 pixels are sampled deterministically.</li>
+          <li>Fully transparent pixels are ignored; translucent pixels are composited on white.</li>
+          <li>The chosen method generates extra candidates so similar colours can be removed without shrinking the palette.</li>
+        </ol>
+      </section>
+      <div class="algorithm-guide">
+        <article><p class="guide-number">01</p><h3>Natural</h3><p>Deterministic K-means finds representative centres within continuous colour variation. It starts near the image average, adds frequent colours far from existing centres, then repeatedly assigns pixels and recalculates weighted centres until the result stabilises. Best for photographs.</p></article>
+        <article><p class="guide-number">02</p><h3>Graphic</h3><p>A weighted histogram groups RGB values into 4,096 possible buckets, counts their pixels, and averages the real colours inside each bucket. The most populated groups become the candidates. Best for logos, posters, screenshots, and flat artwork.</p></article>
+        <article><p class="guide-number">03</p><h3>Balanced</h3><p>Population-aware median cut repeatedly chooses the colour box with the strongest combination of range and population, then splits it along its widest channel at the weighted median. This spreads the palette across the image and works for any requested count.</p></article>
+      </div>
+      <section>
+        <h3>After extraction</h3>
+        <p>All candidates are compared in perceptual Lab space. Similar colours are skipped, then unused candidates are backfilled by distance when needed. This encourages clear separation without unnecessarily returning fewer colours than requested.</p>
+      </section>
+    </dialog>
     <div class="toast" role="status" aria-live="polite">${escapeHtml(state.notice)}</div>
   `;
   bindEvents();
@@ -298,15 +329,21 @@ function bindEvents(): void {
     state.displayFormat = control.dataset.displayFormat as DisplayFormat;
     render();
   }));
+  const infoDialog = document.querySelector<HTMLDialogElement>('#info-dialog');
+  document.querySelector('#open-info')?.addEventListener('click', () => infoDialog?.showModal());
+  document.querySelector('#close-info')?.addEventListener('click', () => infoDialog?.close());
+  infoDialog?.addEventListener('click', (event) => {
+    if (event.target === infoDialog) infoDialog.close();
+  });
   document.querySelectorAll<HTMLElement>('[data-copy]').forEach((swatch) => swatch.addEventListener('click', () => {
     const value = swatch.dataset.copy;
     if (value) void copyText(value, `${value} copied`);
   }));
   document.querySelector('#copy-code')?.addEventListener('click', () =>
-    void copyText(formatPalette(state.colours, state.format), 'Code snippet copied'),
+    void copyText(formatPalette(state.colours, state.format, state.displayFormat), 'Code snippet copied'),
   );
   document.querySelector('#download-code')?.addEventListener('click', () => {
-    const blob = new Blob([formatPalette(state.colours, state.format)], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([formatPalette(state.colours, state.format, state.displayFormat)], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `colour-palette.${formatExtension(state.format)}`;
