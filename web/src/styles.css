@@ -131,7 +131,7 @@ h1 { max-width: none; margin-bottom: 0; font-size: clamp(2.75rem, 5.6vw, 5.25rem
 .upload-zone h2 { margin-bottom: .25rem; font-size: clamp(1.8rem, 4vw, 3rem); letter-spacing: -.05em; }
 .upload-zone p, .upload-zone small { color: var(--muted); }
 .upload-zone-compact { min-height: 14rem; margin-top: 1rem; }
-.upload-icon { width: 8rem; height: 6rem; position: relative; }
+.upload-icon { width: 8rem; height: 6rem; position: relative; isolation: isolate; }
 .upload-icon span { position: absolute; width: 4.2rem; height: 4.2rem; left: 1.9rem; top: .8rem; border-radius: 50%; background: #ffc928; mix-blend-mode: multiply; }
 .upload-icon span:nth-child(2) { left: .3rem; top: 1.3rem; background: #ff6541; }
 .upload-icon span:nth-child(3) { left: 3.5rem; top: 1.3rem; background: #7457ff; }
