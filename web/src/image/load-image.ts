@@ -9,6 +9,7 @@ export interface LoadedImage {
 }
 
 const MAX_DIMENSION = 800;
+const MAX_FILE_SIZE = 25 * 1024 * 1024;
 
 function imageDataToBytes(data: Uint8ClampedArray): Uint8Array {
   const pixels = pixelsFromRgba(data);
@@ -46,8 +47,39 @@ async function bitmapToLoadedImage(bitmap: ImageBitmap, name: string): Promise<L
 
 export async function loadImage(file: File): Promise<LoadedImage> {
   if (!file.type.startsWith('image/')) throw new Error('Choose a PNG, JPEG, WebP, GIF, BMP, or other browser-supported image.');
+  if (file.size > MAX_FILE_SIZE) throw new Error('Choose an image smaller than 25 MB.');
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
   return bitmapToLoadedImage(bitmap, file.name);
+}
+
+export async function loadImageFromUrl(value: string): Promise<LoadedImage> {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('Enter a complete image link beginning with http:// or https://.');
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error('Enter a complete image link beginning with http:// or https://.');
+  }
+
+  try {
+    const response = await fetch(url, { mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (!response.ok) throw new Error(`The image host returned ${response.status}.`);
+    const declaredSize = Number(response.headers.get('content-length'));
+    if (declaredSize > MAX_FILE_SIZE) throw new Error('Choose an image smaller than 25 MB.');
+    const blob = await response.blob();
+    if (blob.size > MAX_FILE_SIZE) throw new Error('Choose an image smaller than 25 MB.');
+    if (blob.type && !blob.type.startsWith('image/')) throw new Error('That link did not return an image.');
+    const bitmap = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+    const pathName = decodeURIComponent(url.pathname.split('/').filter(Boolean).at(-1) ?? '');
+    return bitmapToLoadedImage(bitmap, pathName || `Image from ${url.hostname}`);
+  } catch (error) {
+    if (error instanceof Error && (
+      error.message.includes('smaller than') || error.message.includes('did not return') || error.message.includes('returned')
+    )) throw error;
+    throw new Error('This image host does not allow browser access. Download the image and choose the file instead.');
+  }
 }
 
 export async function createSampleImage(): Promise<LoadedImage> {
