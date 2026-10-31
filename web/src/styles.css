@@ -151,6 +151,8 @@ pre { min-height: 10rem; margin: 0; padding: 1.4rem; overflow: auto; color: #ffd
 
 footer { min-height: 6rem; display: flex; align-items: center; justify-content: space-between; gap: 2rem; border-top: 1px solid var(--line); color: var(--muted); font: .7rem var(--mono); }
 footer p { margin: 0; }
+footer a { text-underline-offset: 0.2rem; }
+footer a:hover { color: var(--accent-dark); }
 .info-dialog { width: min(58rem, calc(100% - 2rem)); max-height: min(52rem, calc(100vh - 2rem)); padding: clamp(1.4rem, 4vw, 3rem); border: 1px solid var(--line); border-radius: 1.25rem; background: var(--paper); color: var(--ink); box-shadow: 0 30px 100px rgb(36 33 31 / 24%); }
 .info-dialog::backdrop { background: rgb(36 33 31 / 48%); backdrop-filter: blur(4px); }
 .dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--line); }

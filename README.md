@@ -2,7 +2,9 @@
 
 A browser-based tool for turning an image into a useful colour palette and ready-to-copy creative code.
 
-The static v2 application is being developed on the `static-v2` branch. It will replace the original Streamlit interface after final visual review and deployment verification. The Streamlit version remains available from the `streamlit-v1` tag and in the `streamlit/` directory.
+**[Try the browser app](https://anyalitica.github.io/color-palette-extractor/)**
+
+The original Streamlit version remains available from the `streamlit-v1` tag and in the `streamlit/` directory.
 
 ## Why static v2
 
@@ -58,6 +60,7 @@ Every mode produces weighted candidates. A shared post-processing step filters p
 │   └── tests/
 ├── streamlit/                   # Original v1 implementation
 ├── docs/static-v2-plan.md       # Migration plan and acceptance gates
+├── docs/web-app-blog-post-draft.md
 └── .github/workflows/           # Tests, build, and Pages deployment
 ```
 
@@ -66,8 +69,8 @@ Every mode produces weighted candidates. A shared post-processing step filters p
 Node.js 20 or newer is required.
 
 ```bash
-git clone https://github.com/anyalitica/color-extractor-app.git
-cd color-extractor-app/web
+git clone https://github.com/anyalitica/color-palette-extractor.git
+cd color-palette-extractor/web
 npm ci --legacy-peer-deps
 npm run dev
 ```
@@ -91,7 +94,7 @@ Tests cover deterministic extraction, non-power-of-two palette sizes, similarity
 
 The GitHub Actions workflow builds `web/` and publishes `web/dist/` to GitHub Pages after changes reach `main`. Vite uses relative asset paths so the app works at the repository URL:
 
-`https://anyalitica.github.io/color-extractor-app/`
+`https://anyalitica.github.io/color-palette-extractor/`
 
 GitHub Pages must use **GitHub Actions** as its build source in the repository settings before the first deployment.
 

@@ -206,7 +206,7 @@ function render(): void {
       </a>
       <div class="header-actions">
         <button class="info-button" id="open-info" type="button"><span aria-hidden="true">i</span><strong>How it works</strong></button>
-        <a class="source-link" href="https://github.com/anyalitica/color-extractor-app">View source <span aria-hidden="true">↗</span></a>
+        <a class="source-link" href="https://github.com/anyalitica/color-palette-extractor">View source <span aria-hidden="true">↗</span></a>
       </div>
     </header>
     <main id="workspace" class="page-shell">
@@ -221,7 +221,17 @@ function render(): void {
         ${paletteMarkup()}
       </section>
     </main>
-    <footer><p>Designed for creative coding</p><p>Private by default · Open source</p></footer>
+    <footer>
+      <p>
+        Designed for creative coding by
+        <a
+          href="https://github.com/anyalitica/color-palette-extractor"
+          target="_blank"
+          rel="noopener noreferrer"
+        >@Anyalitica</a>
+      </p>
+      <p>Private by default · Open source</p>
+    </footer>
     <dialog class="info-dialog" id="info-dialog" aria-labelledby="info-title">
       <div class="dialog-heading">
         <div><p class="eyebrow">Behind the palette</p><h2 id="info-title">How extraction works</h2></div>

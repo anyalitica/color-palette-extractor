@@ -165,3 +165,4 @@ color_extractor_env/
 CLAUDE.md
 docs/*
 !docs/static-v2-plan.md
+!docs/web-app-blog-post-draft.md
