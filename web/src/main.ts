@@ -211,7 +211,7 @@ function render(): void {
     </header>
     <main id="workspace" class="page-shell">
       <section class="intro" aria-labelledby="page-title">
-        <div><h1 id="page-title">Find the colours worth keeping.</h1></div>
+        <h1 id="page-title">Find the colours worth keeping.</h1>
         <p class="lede">Build a colour palette from any image, then copy it straight into your sketch. Everything stays in your browser.</p>
       </section>
       <section class="workspace-card two-panel-workspace" aria-label="Palette extraction workspace">
