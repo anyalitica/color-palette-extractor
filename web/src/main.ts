@@ -195,8 +195,8 @@ function render(): void {
     </header>
     <main id="workspace" class="page-shell">
       <section class="intro" aria-labelledby="page-title">
-        <div><p class="eyebrow">Image to creative code</p><h1 id="page-title">Find the colours worth keeping.</h1></div>
-        <p class="lede">Build a thoughtful palette from any image, then copy it straight into your sketch. Everything stays in your browser.</p>
+        <div><h1 id="page-title">Find the colours worth keeping.</h1></div>
+        <p class="lede">Build a colour palette from any image, then copy it straight into your sketch. Everything stays in your browser.</p>
       </section>
       <section class="workspace-card" aria-label="Palette extraction workspace">
         ${state.error ? `<div class="message error" role="alert">${escapeHtml(state.error)}</div>` : ''}
@@ -205,7 +205,7 @@ function render(): void {
         ${paletteMarkup()}
       </section>
     </main>
-    <footer><p>Designed for creative coding.</p><p>Private by default · No upload · Open source</p></footer>
+    <footer><p>Designed for creative coding</p><p>Private by default · Open source</p></footer>
     <dialog class="info-dialog" id="info-dialog" aria-labelledby="info-title">
       <div class="dialog-heading">
         <div><p class="eyebrow">Behind the palette</p><h2 id="info-title">How extraction works</h2></div>
