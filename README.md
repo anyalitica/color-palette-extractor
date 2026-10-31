@@ -30,7 +30,7 @@ Image processing happens locally in the browser. Local image bytes are never upl
 - Local file, clipboard, drag-and-drop, and direct image-link input
 - Click-to-copy colour swatches
 - Live HEX/RGB swatch toggle without re-extraction
-- HEX- or RGB-consistent snippets with perceptually matched standard CSS colour-name annotations
+- HEX- or RGB-consistent snippets with systematic, perceptual colour-name annotations
 - Built-in guide explaining preprocessing and each extraction method
 - JavaScript, CSS, JSON, p5.js, Processing, and GLSL output
 - Downloadable code snippets

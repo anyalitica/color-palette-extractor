@@ -309,7 +309,7 @@ function render(): void {
       </section>
       <section>
         <h3>Colour names</h3>
-        <p>Snippet annotations use the standard CSS colour-name table rather than a small hand-written list. Each extracted colour is matched to its perceptually closest named colour in Lab space, so dark greens remain green instead of drifting toward a visually similar neutral label.</p>
+        <p>Snippet annotations use systematic descriptions based on hue, saturation, and perceptual Lab lightness. Broad colour families such as orange, amber, green, and red are combined with useful modifiers such as muted, dark, or very light. This avoids surprising decorative names caused by matching against a sparse lookup table.</p>
       </section>
     </dialog>
     <div class="toast" role="status" aria-live="polite">${escapeHtml(state.notice)}</div>

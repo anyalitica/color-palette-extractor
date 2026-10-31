@@ -17,9 +17,18 @@ describe('application foundation', () => {
     expect(isThemePreference('sepia')).toBe(false);
   });
 
-  it('uses perceptually matched standard colour names', () => {
+  it('uses systematic perceptual colour descriptions', () => {
     expect(getColourName({ r: 0, g: 100, b: 0 })).toBe('Dark green');
-    expect(getColourName({ r: 255, g: 99, b: 71 })).toBe('Tomato');
+    expect(getColourName({ r: 255, g: 99, b: 71 })).toBe('Red orange');
+  });
+
+  it('describes the warm palette without misleading decorative names', () => {
+    expect([
+      '#913301', '#b56100', '#420600', '#640700', '#100100', '#c57e00',
+    ].map((hex) => {
+      const value = Number.parseInt(hex.slice(1), 16);
+      return getColourName({ r: value >> 16, g: (value >> 8) & 255, b: value & 255 });
+    })).toEqual(['Dark orange', 'Orange', 'Very dark red', 'Very dark red', 'Near-black red', 'Amber']);
   });
 
   it('rejects incomplete image links before requesting them', async () => {
