@@ -3,7 +3,7 @@ import { colourDistance, rgbToHex } from '../src/colour/conversion';
 import { extractPalette } from '../src/extraction';
 import { pixelsFromRgba } from '../src/image/pixels';
 import type { RGB } from '../src/types';
-import { formatColourValue, formatPalette } from '../src/output/formatters';
+import { formatColourValue, formatPalette, OUTPUT_FORMATS } from '../src/output/formatters';
 import { decodeSharedPalette, encodeSharedPalette } from '../src/output/sharing';
 
 function repeated(colour: RGB, count: number): RGB[] {
@@ -79,7 +79,20 @@ describe('creative coding output', () => {
   });
 
   it('produces normalised GLSL vectors', () => {
-    expect(formatPalette(palette, 'glsl')).toContain('vec3(1.000, 0.000, 0.063)');
+    expect(formatPalette(palette, 'glsl', 'rgb')).toContain('vec3(1.000, 0.000, 0.063)');
+  });
+
+  it('uses only the selected colour representation in every code format', () => {
+    for (const { id } of OUTPUT_FORMATS) {
+      expect(formatPalette(palette, id, 'hex')).not.toContain('rgb(');
+      expect(formatPalette(palette, id, 'rgb')).not.toContain('#');
+    }
+  });
+
+  it('adds navigable colour names without invalidating JSON', () => {
+    expect(formatPalette(palette, 'javascript', 'hex')).toContain('// Colour 1:');
+    const json = JSON.parse(formatPalette(palette, 'json', 'rgb')) as Array<Record<string, unknown>>;
+    expect(json[0]).toMatchObject({ name: expect.any(String), value: 'rgb(255, 0, 16)', index: 1 });
   });
 
   it('round-trips validated shared palette state', () => {
