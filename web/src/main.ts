@@ -21,6 +21,7 @@ interface AppState {
   minDistance: number;
   format: OutputFormat;
   displayFormat: DisplayFormat;
+  codeOpen: boolean;
   busy: boolean;
   error: string;
   notice: string;
@@ -42,6 +43,7 @@ const state: AppState = {
   minDistance: shared?.minDistance ?? 18,
   format: shared?.format ?? 'javascript',
   displayFormat: shared?.displayFormat ?? 'hex',
+  codeOpen: false,
   busy: false,
   error: sharedToken && !shared ? 'That shared palette link is invalid. Start with a new image instead.' : '',
   notice: shared ? 'Shared palette restored — the original image was not included.' : '',
@@ -71,28 +73,30 @@ function outputOptions(): string {
   ).join('');
 }
 
-function modeControls(): string {
-  return MODE_DEFINITIONS.map(({ id, label, description }) => `
-    <label class="mode-card${state.mode === id ? ' is-selected' : ''}">
-      <input type="radio" name="mode" value="${id}"${state.mode === id ? ' checked' : ''} />
-      <span><strong>${label}</strong><small>${description}</small></span>
-      <i aria-hidden="true"></i>
-    </label>
-  `).join('');
+function modeOptions(): string {
+  return MODE_DEFINITIONS.map(({ id, label }) =>
+    `<option value="${id}"${state.mode === id ? ' selected' : ''}>${label}</option>`,
+  ).join('');
 }
 
-function workspaceClassName(): string {
-  if (state.colours.length === 0) return 'workspace-card';
-  return `workspace-card has-results ${state.image ? 'has-image' : 'shared-results'}`;
+function selectedModeDescription(): string {
+  return MODE_DEFINITIONS.find(({ id }) => id === state.mode)?.description ?? '';
 }
 
 function paletteMarkup(): string {
   if (state.busy && state.colours.length === 0) {
-    return `<div class="result-placeholder"><span class="spinner" aria-hidden="true"></span><p>Finding a useful palette…</p></div>`;
+    return `<section class="results-panel result-placeholder" aria-live="polite"><span class="spinner" aria-hidden="true"></span><p>Finding a useful palette…</p></section>`;
   }
-  if (state.colours.length === 0) return '';
+  if (state.colours.length === 0) {
+    return `
+      <section class="results-panel empty-results" aria-label="Palette results">
+        <div class="empty-palette-art" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div><p class="eyebrow">Your palette</p><h2>Colours will appear here</h2><p>Choose an image or try the sample artwork to create a palette.</p></div>
+      </section>
+    `;
+  }
   return `
-    <section class="results" aria-labelledby="palette-heading">
+    <section class="results results-panel" aria-labelledby="palette-heading">
       <div class="section-heading palette-heading">
         <div><p class="eyebrow">Your palette</p><h2 id="palette-heading">${state.colours.length} colours, ready to use</h2></div>
         <div class="palette-actions">
@@ -100,7 +104,6 @@ function paletteMarkup(): string {
             <button type="button" data-display-format="hex" aria-pressed="${state.displayFormat === 'hex'}">HEX</button>
             <button type="button" data-display-format="rgb" aria-pressed="${state.displayFormat === 'rgb'}">RGB</button>
           </div>
-          ${state.image ? `<button class="text-button" id="remove-image" type="button">Start over</button>` : ''}
         </div>
       </div>
       <div class="swatches" role="list" aria-label="Extracted colours">
@@ -117,19 +120,25 @@ function paletteMarkup(): string {
           </button>`;
         }).join('')}
       </div>
-      <div class="code-panel">
-        <div class="code-toolbar">
-          <label for="output-format">Code format · ${state.displayFormat.toUpperCase()}</label>
-          <select id="output-format">${outputOptions()}</select>
-          <button class="button button-small" id="copy-code" type="button">Copy snippet</button>
-          <button class="icon-button" id="download-code" type="button" aria-label="Download palette code" title="Download palette code">↓</button>
+      <details class="code-disclosure"${state.codeOpen ? ' open' : ''}>
+        <summary>
+          <span><strong>Code output</strong><small>${OUTPUT_FORMATS.find(({ id }) => id === state.format)?.label ?? 'Code'} · ${state.displayFormat.toUpperCase()}</small></span>
+          <span class="disclosure-action">Open</span>
+        </summary>
+        <div class="code-panel">
+          <div class="code-toolbar">
+            <label for="output-format">Code format · ${state.displayFormat.toUpperCase()}</label>
+            <select id="output-format">${outputOptions()}</select>
+            <button class="button button-small" id="copy-code" type="button">Copy snippet</button>
+            <button class="icon-button" id="download-code" type="button" aria-label="Download palette code" title="Download palette code">↓</button>
+          </div>
+          <pre tabindex="0"><code>${escapeHtml(formatPalette(state.colours, state.format, state.displayFormat))}</code></pre>
+          <div class="share-row">
+            <p>Share the colours and settings — never the source image.</p>
+            <button class="text-button" id="share-palette" type="button">Copy share link</button>
+          </div>
         </div>
-        <pre tabindex="0"><code>${escapeHtml(formatPalette(state.colours, state.format, state.displayFormat))}</code></pre>
-        <div class="share-row">
-          <p>Share the colours and settings — never the source image.</p>
-          <button class="text-button" id="share-palette" type="button">Copy share link</button>
-        </div>
-      </div>
+      </details>
     </section>
   `;
 }
@@ -152,38 +161,40 @@ function uploadMarkup(compact = false): string {
   `;
 }
 
-function studioMarkup(): string {
-  if (!state.image) return uploadMarkup(state.sharedOnly);
+function sourceMarkup(): string {
+  if (!state.image) return `<section class="source-panel">${uploadMarkup(state.sharedOnly)}</section>`;
   return `
-    <div class="studio">
-      <section class="preview-panel" aria-label="Selected image">
+    <section class="source-panel" aria-label="Source image and extraction controls">
+      <div class="preview-panel">
         <div class="image-frame"><img src="${state.image.previewUrl}" alt="Preview of ${escapeHtml(state.image.name)}" /></div>
         <div class="image-meta">
           <div><strong>${escapeHtml(state.image.name)}</strong><small>${state.image.width} × ${state.image.height} processing preview</small></div>
           <label class="text-button" for="image-input">Replace</label>
+          <button class="text-button" id="remove-image" type="button">Start over</button>
           <input class="visually-hidden" id="image-input" type="file" accept="image/*" />
         </div>
-      </section>
-      <section class="controls-panel" aria-labelledby="controls-heading">
-        <div class="section-heading"><div><p class="eyebrow">Refine</p><h2 id="controls-heading">Shape the result</h2></div></div>
-        <div class="field count-field">
-          <div><label for="colour-count">Number of colours</label><output for="colour-count">${state.count}</output></div>
-          <input id="colour-count" type="range" min="2" max="12" value="${state.count}" />
-          <div class="range-labels" aria-hidden="true"><span>2</span><span>12</span></div>
+      </div>
+      <div class="control-bar" aria-label="Extraction controls">
+        <div class="compact-control count-stepper">
+          <span class="control-label">Colours</span>
+          <div><button type="button" data-count-step="-1" aria-label="Use one fewer colour"${state.count <= 2 ? ' disabled' : ''}>−</button><output aria-live="polite">${state.count}</output><button type="button" data-count-step="1" aria-label="Use one more colour"${state.count >= 12 ? ' disabled' : ''}>+</button></div>
         </div>
-        <fieldset class="field mode-field"><legend>Extraction style</legend>${modeControls()}</fieldset>
-        <details class="advanced">
-          <summary>Advanced settings</summary>
-          <label for="distance">Colour distinctness</label>
-          <select id="distance">
-            <option value="8"${state.minDistance === 8 ? ' selected' : ''}>Subtle — preserve close shades</option>
-            <option value="18"${state.minDistance === 18 ? ' selected' : ''}>Balanced — noticeably different</option>
-            <option value="30"${state.minDistance === 30 ? ' selected' : ''}>Bold — maximise contrast</option>
-          </select>
-          <p>Fully transparent pixels are ignored; translucent pixels are composited on white.</p>
+        <label class="compact-control style-control" for="mode-select"><span class="control-label">Style</span><select id="mode-select">${modeOptions()}</select></label>
+        <details class="compact-advanced">
+          <summary>Adjustments</summary>
+          <div class="adjustment-popover">
+            <label for="distance">Colour distinctness</label>
+            <select id="distance">
+              <option value="8"${state.minDistance === 8 ? ' selected' : ''}>Subtle — preserve close shades</option>
+              <option value="18"${state.minDistance === 18 ? ' selected' : ''}>Balanced — noticeably different</option>
+              <option value="30"${state.minDistance === 30 ? ' selected' : ''}>Bold — maximise contrast</option>
+            </select>
+            <p>Transparent pixels are ignored; translucent pixels are composited on white.</p>
+          </div>
         </details>
-      </section>
-    </div>
+      </div>
+      <p class="mode-note"><strong>${MODE_DEFINITIONS.find(({ id }) => id === state.mode)?.label}:</strong> ${selectedModeDescription()}</p>
+    </section>
   `;
 }
 
@@ -203,10 +214,10 @@ function render(): void {
         <div><h1 id="page-title">Find the colours worth keeping.</h1></div>
         <p class="lede">Build a colour palette from any image, then copy it straight into your sketch. Everything stays in your browser.</p>
       </section>
-      <section class="${workspaceClassName()}" aria-label="Palette extraction workspace">
+      <section class="workspace-card two-panel-workspace" aria-label="Palette extraction workspace">
         ${state.error ? `<div class="message error" role="alert">${escapeHtml(state.error)}</div>` : ''}
         ${state.sharedOnly && state.notice ? `<div class="message" role="status">${escapeHtml(state.notice)}</div>` : ''}
-        ${studioMarkup()}
+        ${sourceMarkup()}
         ${paletteMarkup()}
       </section>
     </main>
@@ -314,20 +325,21 @@ function bindEvents(): void {
     if (file) void useImage(file);
   });
 
-  document.querySelector<HTMLInputElement>('#colour-count')?.addEventListener('change', (event) => {
-    state.count = Number((event.target as HTMLInputElement).value);
-    requestExtraction();
-  });
-  document.querySelectorAll<HTMLInputElement>('input[name="mode"]').forEach((control) => control.addEventListener('change', () => {
-    state.mode = control.value as ExtractionMode;
+  document.querySelectorAll<HTMLButtonElement>('[data-count-step]').forEach((control) => control.addEventListener('click', () => {
+    state.count = Math.max(2, Math.min(12, state.count + Number(control.dataset.countStep)));
     requestExtraction();
   }));
+  document.querySelector<HTMLSelectElement>('#mode-select')?.addEventListener('change', (event) => {
+    state.mode = (event.target as HTMLSelectElement).value as ExtractionMode;
+    requestExtraction();
+  });
   document.querySelector<HTMLSelectElement>('#distance')?.addEventListener('change', (event) => {
     state.minDistance = Number((event.target as HTMLSelectElement).value);
     requestExtraction();
   });
   document.querySelector<HTMLSelectElement>('#output-format')?.addEventListener('change', (event) => {
     state.format = (event.target as HTMLSelectElement).value as OutputFormat;
+    state.codeOpen = true;
     render();
   });
   document.querySelectorAll<HTMLButtonElement>('[data-display-format]').forEach((control) => control.addEventListener('click', () => {
@@ -339,6 +351,9 @@ function bindEvents(): void {
   document.querySelector('#close-info')?.addEventListener('click', () => infoDialog?.close());
   infoDialog?.addEventListener('click', (event) => {
     if (event.target === infoDialog) infoDialog.close();
+  });
+  document.querySelector<HTMLDetailsElement>('.code-disclosure')?.addEventListener('toggle', (event) => {
+    state.codeOpen = (event.currentTarget as HTMLDetailsElement).open;
   });
   document.querySelectorAll<HTMLElement>('[data-copy]').forEach((swatch) => swatch.addEventListener('click', () => {
     const value = swatch.dataset.copy;
