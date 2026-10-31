@@ -1,5 +1,5 @@
 import { normaliseRgb, rgbToHex } from '../colour/conversion';
-import type { OutputFormat, RGB } from '../types';
+import type { DisplayFormat, OutputFormat, RGB } from '../types';
 
 export const OUTPUT_FORMATS: ReadonlyArray<{ id: OutputFormat; label: string; extension: string }> = [
   { id: 'javascript', label: 'JavaScript', extension: 'js' },
@@ -11,6 +11,12 @@ export const OUTPUT_FORMATS: ReadonlyArray<{ id: OutputFormat; label: string; ex
 ];
 
 const quotedHex = (colours: readonly RGB[]) => colours.map((colour) => `'${rgbToHex(colour)}'`).join(', ');
+
+export function formatColourValue(colour: RGB, format: DisplayFormat): string {
+  if (format === 'hex') return rgbToHex(colour);
+  const { r, g, b } = normaliseRgb(colour);
+  return `rgb(${r}, ${g}, ${b})`;
+}
 
 export function formatPalette(colours: readonly RGB[], format: OutputFormat): string {
   switch (format) {

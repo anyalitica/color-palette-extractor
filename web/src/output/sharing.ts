@@ -1,7 +1,8 @@
-import type { ExtractionMode, OutputFormat, RGB, SharedPalette } from '../types';
+import type { DisplayFormat, ExtractionMode, OutputFormat, RGB, SharedPalette } from '../types';
 
 const modes: ExtractionMode[] = ['natural', 'graphic', 'balanced'];
 const formats: OutputFormat[] = ['javascript', 'css', 'json', 'p5js', 'processing', 'glsl'];
+const displayFormats: DisplayFormat[] = ['hex', 'rgb'];
 
 function toBase64Url(value: string): string {
   return btoa(value).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/u, '');
@@ -20,6 +21,7 @@ export function encodeSharedPalette(payload: SharedPalette): string {
     n: payload.count,
     d: payload.minDistance,
     f: payload.format,
+    x: payload.displayFormat,
   };
   return toBase64Url(JSON.stringify(compact));
 }
@@ -38,6 +40,8 @@ export function decodeSharedPalette(token: string): SharedPalette | null {
       colours.push({ r: Number(r), g: Number(g), b: Number(b) });
     }
     if (colours.length === 0 || colours.length > 16) return null;
+    const displayFormat = value.x === undefined ? 'hex' : value.x;
+    if (!displayFormats.includes(displayFormat as DisplayFormat)) return null;
     return {
       version: 1,
       colours,
@@ -45,6 +49,7 @@ export function decodeSharedPalette(token: string): SharedPalette | null {
       count: Number(value.n),
       minDistance: value.d,
       format: value.f as OutputFormat,
+      displayFormat: displayFormat as DisplayFormat,
     };
   } catch {
     return null;

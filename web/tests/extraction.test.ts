@@ -3,7 +3,7 @@ import { colourDistance, rgbToHex } from '../src/colour/conversion';
 import { extractPalette } from '../src/extraction';
 import { pixelsFromRgba } from '../src/image/pixels';
 import type { RGB } from '../src/types';
-import { formatPalette } from '../src/output/formatters';
+import { formatColourValue, formatPalette } from '../src/output/formatters';
 import { decodeSharedPalette, encodeSharedPalette } from '../src/output/sharing';
 
 function repeated(colour: RGB, count: number): RGB[] {
@@ -73,6 +73,11 @@ describe('creative coding output', () => {
     expect(formatPalette(palette, 'css')).toContain('--colour-1: #ff0010;');
   });
 
+  it('formats live HEX and RGB display values without extraction', () => {
+    expect(formatColourValue(palette[0]!, 'hex')).toBe('#ff0010');
+    expect(formatColourValue(palette[0]!, 'rgb')).toBe('rgb(255, 0, 16)');
+  });
+
   it('produces normalised GLSL vectors', () => {
     expect(formatPalette(palette, 'glsl')).toContain('vec3(1.000, 0.000, 0.063)');
   });
@@ -85,6 +90,7 @@ describe('creative coding output', () => {
       count: 2,
       minDistance: 18,
       format: 'p5js' as const,
+      displayFormat: 'rgb' as const,
     };
     expect(decodeSharedPalette(encodeSharedPalette(shared))).toEqual(shared);
     expect(decodeSharedPalette('not-valid')).toBeNull();

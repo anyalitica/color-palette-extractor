@@ -2,10 +2,11 @@ import './styles.css';
 import { rgbToHex } from './colour/conversion';
 import type { ExtractionResponse } from './extraction/extraction.worker';
 import { createSampleImage, loadImage, type LoadedImage } from './image/load-image';
-import { formatExtension, formatPalette, OUTPUT_FORMATS } from './output/formatters';
+import { formatColourValue, formatExtension, formatPalette, OUTPUT_FORMATS } from './output/formatters';
 import { decodeSharedPalette, encodeSharedPalette, paletteTokenFromHash } from './output/sharing';
 import {
   MODE_DEFINITIONS,
+  type DisplayFormat,
   type ExtractionMode,
   type OutputFormat,
   type SharedPalette,
@@ -19,6 +20,7 @@ interface AppState {
   count: number;
   minDistance: number;
   format: OutputFormat;
+  displayFormat: DisplayFormat;
   busy: boolean;
   error: string;
   notice: string;
@@ -39,6 +41,7 @@ const state: AppState = {
   count: shared?.count ?? 6,
   minDistance: shared?.minDistance ?? 18,
   format: shared?.format ?? 'javascript',
+  displayFormat: shared?.displayFormat ?? 'hex',
   busy: false,
   error: sharedToken && !shared ? 'That shared palette link is invalid. Start with a new image instead.' : '',
   notice: shared ? 'Shared palette restored — the original image was not included.' : '',
@@ -85,17 +88,27 @@ function paletteMarkup(): string {
   if (state.colours.length === 0) return '';
   return `
     <section class="results" aria-labelledby="palette-heading">
-      <div class="section-heading">
+      <div class="section-heading palette-heading">
         <div><p class="eyebrow">Your palette</p><h2 id="palette-heading">${state.colours.length} colours, ready to use</h2></div>
-        ${state.image ? `<button class="text-button" id="remove-image" type="button">Start over</button>` : ''}
+        <div class="palette-actions">
+          <div class="format-toggle" role="group" aria-label="Colour value format">
+            <button type="button" data-display-format="hex" aria-pressed="${state.displayFormat === 'hex'}">HEX</button>
+            <button type="button" data-display-format="rgb" aria-pressed="${state.displayFormat === 'rgb'}">RGB</button>
+          </div>
+          ${state.image ? `<button class="text-button" id="remove-image" type="button">Start over</button>` : ''}
+        </div>
       </div>
       <div class="swatches" role="list" aria-label="Extracted colours">
         ${state.colours.map((colour, index) => {
           const hex = rgbToHex(colour);
+          const primaryValue = formatColourValue(colour, state.displayFormat);
+          const secondaryValue = state.displayFormat === 'hex'
+            ? formatColourValue(colour, 'rgb')
+            : hex;
           const dark = colour.r * 0.299 + colour.g * 0.587 + colour.b * 0.114 < 145;
-          return `<button class="swatch" type="button" role="listitem" data-copy="${hex}" style="--swatch:${hex};--swatch-ink:${dark ? '#fffdf8' : '#24211f'}" aria-label="Copy colour ${index + 1}, ${hex}">
+          return `<button class="swatch" type="button" role="listitem" data-copy="${primaryValue}" style="--swatch:${hex};--swatch-ink:${dark ? '#fffdf8' : '#24211f'}" aria-label="Copy colour ${index + 1}, ${primaryValue}">
             <span class="swatch-index">${String(index + 1).padStart(2, '0')}</span>
-            <span><strong>${hex}</strong><small>${colour.r}, ${colour.g}, ${colour.b}</small></span>
+            <span><strong>${primaryValue}</strong><small>${secondaryValue}</small></span>
           </button>`;
         }).join('')}
       </div>
@@ -281,6 +294,10 @@ function bindEvents(): void {
     state.format = (event.target as HTMLSelectElement).value as OutputFormat;
     render();
   });
+  document.querySelectorAll<HTMLButtonElement>('[data-display-format]').forEach((control) => control.addEventListener('click', () => {
+    state.displayFormat = control.dataset.displayFormat as DisplayFormat;
+    render();
+  }));
   document.querySelectorAll<HTMLElement>('[data-copy]').forEach((swatch) => swatch.addEventListener('click', () => {
     const value = swatch.dataset.copy;
     if (value) void copyText(value, `${value} copied`);
@@ -304,6 +321,7 @@ function bindEvents(): void {
       count: state.count,
       minDistance: state.minDistance,
       format: state.format,
+      displayFormat: state.displayFormat,
     };
     const url = new URL(window.location.href);
     url.hash = `palette=${encodeSharedPalette(payload)}`;

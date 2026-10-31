@@ -25,6 +25,7 @@ Image processing happens locally in the browser. Image bytes are never uploaded 
 - Transparent-pixel handling and large-image downsampling
 - Responsive, keyboard-accessible interface
 - Click-to-copy colour swatches
+- Live HEX/RGB swatch toggle without re-extraction
 - JavaScript, CSS, JSON, p5.js, Processing, and GLSL output
 - Downloadable code snippets
 - Shareable URL fragments containing palette data, not images
