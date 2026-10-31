@@ -17,6 +17,7 @@ export interface ExtractionOptions {
 }
 
 export type OutputFormat = 'javascript' | 'css' | 'json' | 'p5js' | 'processing' | 'glsl';
+export type DisplayFormat = 'hex' | 'rgb';
 
 export interface SharedPalette {
   version: 1;
@@ -25,6 +26,7 @@ export interface SharedPalette {
   count: number;
   minDistance: number;
   format: OutputFormat;
+  displayFormat: DisplayFormat;
 }
 
 export interface ModeDefinition {

@@ -80,6 +80,10 @@ h1 { max-width: 12ch; margin-bottom: 0; font-size: clamp(3.2rem, 8vw, 7rem); lin
 .controls-panel { padding: .75rem .5rem; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
 .section-heading h2 { margin-bottom: 0; font-size: clamp(1.6rem, 3vw, 2.4rem); letter-spacing: -.045em; }
+.palette-actions { display: flex; align-items: center; gap: 1.25rem; }
+.format-toggle { display: inline-flex; padding: .2rem; border: 1px solid var(--line); border-radius: 99px; background: #eee9e1; }
+.format-toggle button { min-width: 3.2rem; padding: .42rem .65rem; border: 0; border-radius: 99px; background: transparent; color: var(--muted); font: 600 .68rem var(--mono); }
+.format-toggle button[aria-pressed='true'] { background: var(--ink); color: white; }
 .field { margin: 2rem 0; }
 .field label, .field legend { font-weight: 700; }
 .count-field > div:first-child { display: flex; justify-content: space-between; align-items: center; }
@@ -108,7 +112,7 @@ input[type='range'] { width: 100%; margin: 1rem 0 .25rem; accent-color: var(--ac
 .swatch:hover { transform: translateY(-3px); }
 .swatch-index { font: .68rem var(--mono); opacity: .72; }
 .swatch strong, .swatch small { display: block; }
-.swatch strong { font: 500 .9rem var(--mono); text-transform: uppercase; }
+.swatch strong { font: 500 .9rem var(--mono); }
 .swatch small { margin-top: .2rem; font: .65rem var(--mono); opacity: .78; }
 .result-placeholder { min-height: 8rem; display: flex; align-items: center; justify-content: center; gap: 1rem; color: var(--muted); }
 .spinner { width: 1.2rem; height: 1.2rem; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
@@ -151,6 +155,7 @@ footer p { margin: 0; }
   .upload-zone { min-height: 27rem; padding: 1.25rem; }
   .upload-actions { flex-direction: column; }
   .swatches { grid-template-columns: repeat(2, 1fr); }
+  .palette-heading { align-items: flex-start; flex-direction: column; }
   .swatch { min-height: 10rem; }
   .code-toolbar { grid-template-columns: 1fr auto; }
   .code-toolbar label { display: none; }
