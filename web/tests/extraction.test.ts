@@ -27,6 +27,10 @@ describe('colour conversion', () => {
 });
 
 describe('extraction modes', () => {
+  it('supports a two-colour palette', () => {
+    expect(extractPalette(stripes, { mode: 'natural', count: 2, minDistance: 8 })).toHaveLength(2);
+  });
+
   it('returns graphic colours in prevalence order', () => {
     const palette = extractPalette(stripes, { mode: 'graphic', count: 3, minDistance: 0 });
     expect(palette.map(rgbToHex)).toEqual(['#f0281e', '#1eb450', '#233cdc']);
