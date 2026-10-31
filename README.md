@@ -59,8 +59,6 @@ Every mode produces weighted candidates. A shared post-processing step filters p
 │   │   └── styles.css
 │   └── tests/
 ├── streamlit/                   # Original v1 implementation
-├── docs/static-v2-plan.md       # Migration plan and acceptance gates
-├── docs/web-app-blog-post-draft.md
 └── .github/workflows/           # Tests, build, and Pages deployment
 ```
 
@@ -111,10 +109,6 @@ streamlit run app.py
 ```
 
 The `streamlit-v1` Git tag preserves the exact pre-migration state.
-
-## Migration plan
-
-The staged implementation plan, cutover sequence, and definition of done are documented in [docs/static-v2-plan.md](docs/static-v2-plan.md).
 
 ## License
 
