@@ -6,20 +6,18 @@ A browser-based tool for turning an image into a useful colour palette and ready
 
 [![Colour Palette Extractor showing the source image, generated palette, and code output](assets/app_screenshot.png)](https://anyalitica.github.io/color-palette-extractor/)
 
-The original [Streamlit version remains available](https://color-extractor-app.streamlit.app/) from the `streamlit-v1` tag and in the `streamlit/` directory.
+## What it does
 
-## Why static v2
+An image can contain millions of pixels and thousands of subtly different colours. The Colour Palette Extractor reduces that complexity to a focused palette that can move directly into a creative-coding project.
 
-The original app proved the concept, but its seven algorithms, server-side session state, and large single-file interface made a simple creative workflow harder to understand and maintain.
-
-Static v2 is designed around four steps:
+The app is designed around four steps:
 
 1. Drop, choose, paste, or link to an image.
-2. Choose how the palette should feel.
-3. Adjust the number and distinctness of colours.
-4. Copy the palette directly into a creative-coding project.
+2. Select between two and twelve colours and choose an extraction style.
+3. Adjust how distinct the returned colours should be.
+4. Copy individual values or generate a complete code snippet.
 
-Image processing happens locally in the browser. Local image bytes are never uploaded or included in shared palette links; linked images are fetched directly by the browser when their host permits it.
+Local images are processed in browser memory and are never uploaded or stored by the app. Linked images are fetched directly from their existing host when it permits cross-origin browser access. Shared palette links contain colours and settings, never the source image.
 
 ## Features
 
@@ -39,7 +37,7 @@ Image processing happens locally in the browser. Local image bytes are never upl
 - Shareable URL fragments containing palette data, not images
 - Sample artwork for quick experimentation
 
-## Extraction modes
+## Choosing an extraction style
 
 | Mode | Method | Best for |
 |:---|:---|:---|
@@ -49,11 +47,15 @@ Image processing happens locally in the browser. Local image bytes are never upl
 
 Every mode produces weighted candidates. A shared post-processing step filters perceptually similar colours, backfills from unused candidates when possible, and sorts the result consistently.
 
+- **Natural** uses deterministic K-means to find representative centres within continuous colour variation.
+- **Graphic** groups pixels into a weighted histogram and preserves the dominant colours of flat artwork.
+- **Balanced** repeatedly divides populated colour regions to represent a broader range from across the image.
+
 ## Project structure
 
 ```text
 .
-├── web/                         # Static v2 Vite and TypeScript app
+├── web/                         # Browser app built with Vite and TypeScript
 │   ├── src/
 │   │   ├── colour/              # Colour conversion and Lab distance
 │   │   ├── extraction/          # Three algorithms and Web Worker
@@ -68,7 +70,7 @@ Every mode produces weighted candidates. A shared post-processing step filters p
 
 ## Local development
 
-Node.js 20 or newer is required.
+Node.js 24 or newer is recommended.
 
 ```bash
 git clone https://github.com/anyalitica/color-palette-extractor.git
@@ -90,19 +92,19 @@ npm run test:run
 npm run build
 ```
 
-Tests cover deterministic extraction, non-power-of-two palette sizes, similarity backfilling, transparent pixels, colour conversion, code output, and shared-state validation.
+Tests cover deterministic extraction, non-power-of-two palette sizes, similarity backfilling, transparent pixels, colour conversion and naming, code output, theme resolution, image-link validation, and shared-state validation.
 
 ## Deployment
 
-The GitHub Actions workflow builds `web/` and publishes `web/dist/` to GitHub Pages after changes reach `main`. Vite uses relative asset paths so the app works at the repository URL:
+The GitHub Actions workflow type-checks, tests, and builds `web/` before publishing `web/dist/` to GitHub Pages after changes reach `main`. Vite uses relative asset paths so the app works at the repository URL:
 
 `https://anyalitica.github.io/color-palette-extractor/`
 
-GitHub Pages must use **GitHub Actions** as its build source in the repository settings before the first deployment.
-
 ## Original Streamlit app
 
-The original application can still be run locally:
+The project began as a Streamlit application. That original version remains available as a [live Streamlit app](https://color-extractor-app.streamlit.app/), from the `streamlit-v1` tag, and in the `streamlit/` directory.
+
+It can also be run locally:
 
 ```bash
 cd streamlit
@@ -112,7 +114,7 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The `streamlit-v1` Git tag preserves the exact pre-migration state.
+The current browser app is the actively developed version; the `streamlit-v1` Git tag preserves the exact original implementation.
 
 ## License
 
