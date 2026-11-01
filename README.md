@@ -121,3 +121,5 @@ This project is licensed under the [MIT License](LICENSE).
 ## Author
 
 Designed and developed by [Anya Prosvetova](https://anyalitica.dev).
+
+*Have questions, suggestions, or an interesting palette to share? Open an issue on the [GitHub repository](https://github.com/anyalitica/color-palette-extractor/issues) or reach out to [@Anyalitica](https://github.com/anyalitica).*
