@@ -4,7 +4,7 @@ A browser-based tool for turning an image into a useful colour palette and ready
 
 **[Try the browser app](https://anyalitica.github.io/color-palette-extractor/)**
 
-The original Streamlit version remains available from the `streamlit-v1` tag and in the `streamlit/` directory.
+The original [Streamlit version remains available](https://color-extractor-app.streamlit.app/) from the `streamlit-v1` tag and in the `streamlit/` directory.
 
 ## Why static v2
 
